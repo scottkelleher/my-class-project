@@ -1,11 +1,14 @@
 
+# author - Scott Kelleher
+#this code cleans up the FARS Personal data that is also stored within Scott's R Project file 
+#data is cleaned to get the data necessary to reproduce the paper (http://aje.oxfordjournals.org/content/early/2014/01/27/aje.kwt327.full.pdf+html)
+
+
+
+
 library(foreign)
 library(dplyr)
 library(tidyr)
-
- 
-
-
 
 
 
@@ -33,20 +36,18 @@ clean_yearly_person_file <- function(study_year){
    levels(datafr$sex)[levels(datafr$sex)=="2"] <- "Female"
    levels(datafr$sex)[levels(datafr$sex)=="9"] <- NA
    
-   #datafr<- filter(datafr, datafr$alc_res > as.numeric(0))
+   
    datafr$alc_res <-ifelse(datafr$alc_res == 95 | datafr$alc_res == 96 | datafr$alc_res == 97 | datafr$alc_res == 98 | datafr$alc_res == 99, NA, datafr$alc_res)
    datafr <- mutate(datafr, Alcohol = ifelse(datafr$alc_res> 0, TRUE, FALSE)) %>% 
-     select(-alc_res, -drinking) # %>%
-   #filter(Alcohol, (!is.na))
-   
-   #datafr <- mutate(datafr, one_hour_dead = NA)
+     select(-alc_res, -drinking) 
+ 
    
    datafr$lag_hrs = ifelse(datafr$lag_hrs == 999 | datafr$lag_hrs == 88 | datafr$lag_hrs == 99, NA, datafr$lag_hrs)
    datafr <- filter(datafr, (datafr$lag_hrs*60 + datafr$lag_mins) < 61)
    datafr <- select(datafr, -lag_hrs, -lag_mins)
    
-   datafr$age = ifelse(datafr$age == 999 | datafr$age == 99, NA, datafr$age)
-   datafr$age <- (cut(datafr$age,  breaks=c(0, 25, 44, 65,98)))
+  datafr$age = ifelse(datafr$age == 999 | datafr$age == 99, NA, datafr$age)
+  datafr$age <- (cut(datafr$age,  breaks=c(0, 25, 44, 65,98)))
   datafr$age <- as.factor(datafr$age)
   datafr <- rename(datafr, agecat = age)
   
@@ -72,6 +73,8 @@ clean_yearly_person_file <- function(study_year){
                                      "None", drug_type),
                   drug_type = factor(drug_type)) %>%
     dplyr::select(-drug_type_raw, -drug_number) %>%
+    
+    
     # Filter out any observations where both alcohol and drug data is missing
     dplyr::filter(!(is.na(Alcohol) & is.na(drug_type)))
   
